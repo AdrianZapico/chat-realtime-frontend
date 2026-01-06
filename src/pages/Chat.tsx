@@ -19,6 +19,8 @@ const Chat = () => {
     const roomId = "room1"; // por enquanto fixo
 
     useEffect(() => {
+        if (!socket.current) return;
+
         socket.current.emit("joinRoom", roomId);
 
         socket.current.on("receiveMessage", (data: Message) => {
@@ -26,8 +28,7 @@ const Chat = () => {
         });
 
         return () => {
-            socket.current.off("receiveMessage");
-            disconnectSocket();
+            socket.current?.off("receiveMessage");
         };
     }, []);
 
@@ -74,8 +75,8 @@ const Chat = () => {
                             >
                                 <div
                                     className={`max-w-xs px-4 py-2 rounded-lg ${isMe
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-slate-700 text-slate-100"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-slate-700 text-slate-100"
                                         }`}
                                 >
                                     <p className="text-sm">{msg.content}</p>
