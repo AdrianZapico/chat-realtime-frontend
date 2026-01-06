@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getSocket } from "../services/socket";
 import { useParams, Navigate } from "react-router-dom";
+import RoomsSidebar from "../components/Rooms/RoomsSidebar";
 import api from "../services/api";
 
 interface Message {
@@ -80,6 +81,10 @@ const Chat = () => {
 
     return (
         <div className="flex h-screen bg-slate-900 text-white">
+            {/* Sidebar */}
+            <RoomsSidebar />
+
+            {/* Chat area */}
             <div className="flex flex-col flex-1">
                 {/* Header */}
                 <header className="flex items-center justify-between px-6 py-4 bg-slate-800 border-b border-slate-700">
@@ -101,13 +106,7 @@ const Chat = () => {
                 {/* Messages */}
                 <main className="flex-1 overflow-y-auto p-6 space-y-4">
                     {messages.map((msg) => {
-
                         const isMe = msg.sender._id === user?._id;
-                        console.log({
-                            senderId: msg.sender._id,
-                            userId: user?._id,
-                            equal: msg.sender._id === user?._id
-                        });
 
                         return (
                             <div
@@ -162,6 +161,7 @@ const Chat = () => {
             </div>
         </div>
     );
+
 };
 
 export default Chat;
