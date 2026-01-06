@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import api from "../services/api";
+import { connectSocket, disconnectSocket } from "../services/socket";
 
 interface User {
     id: string;
@@ -27,18 +29,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
+            connectSocket();
         }
     }, []);
 
     const login = async (email: string, password: string) => {
-        // implementação real vem no próximo passo
+        const response = await api.post("/auth/login", {
+            email,
+            password,
+        });
+
+        const { token, user } = response.data;
+
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        setToken(token);
+        setUser(user);
+
+        connectSocket();
     };
 
     const register = async (name: string, email: string, password: string) => {
-        // implementação real vem no próximo passo
+        await api.post("/auth/register", {
+            name,
+            email,
+            password,
+        });
     };
 
     const logout = () => {
+        disconnectSocket();
         setUser(null);
         setToken(null);
         localStorage.removeItem("token");
