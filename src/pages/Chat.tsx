@@ -92,7 +92,13 @@ const Chat = () => {
                 {/* Messages */}
                 <main className="flex-1 overflow-y-auto p-6 space-y-4">
                     {messages.map((msg) => {
-                        const isMe = msg.sender._id === user?.id;
+
+                        const isMe = msg.sender._id === user?._id;
+                        console.log({
+                            senderId: msg.sender._id,
+                            userId: user?._id,
+                            equal: msg.sender._id === user?._id
+                        });
 
                         return (
                             <div
@@ -101,12 +107,12 @@ const Chat = () => {
                             >
                                 <div
                                     className={`max-w-xs px-4 py-2 rounded-lg ${isMe
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-slate-700 text-slate-100"
+                                        ? "bg-slate-700 text-slate-100"
+                                        : "bg-emerald-600 text-white"
                                         }`}
                                 >
                                     {!isMe && (
-                                        <p className="text-xs text-slate-300 mb-1">
+                                        <p className="text-xs text-slate-200 mb-1">
                                             {msg.sender.name}
                                         </p>
                                     )}
