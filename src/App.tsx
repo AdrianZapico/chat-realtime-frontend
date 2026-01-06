@@ -5,21 +5,21 @@ import Chat from "./pages/Chat";
 import PrivateRoute from "./routes/PrivateRoute";
 import { useAuth } from "./context/AuthContext";
 
+
 const App = () => {
   const { user } = useAuth();
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            user ? <Navigate to="/chat" replace /> : <Navigate to="/login" replace />
-          }
-        />
-
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Redireciona /chat para /chat/geral */}
+        <Route
+          path="/chat"
+          element={<Navigate to="/chat/geral" replace />}
+        />
 
         <Route
           path="/chat/:roomId"
@@ -30,6 +30,7 @@ const App = () => {
           }
         />
       </Routes>
+
     </BrowserRouter>
   );
 };
