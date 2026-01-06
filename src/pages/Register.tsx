@@ -90,6 +90,15 @@ const Register = () => {
                 >
                     {loading ? "Criando..." : "Criar conta"}
                 </button>
+                <p className="mt-4 text-center text-sm text-slate-400">
+                    Já tem conta?{" "}
+                    <a
+                        href="/login"
+                        className="text-emerald-400 hover:underline"
+                    >
+                        Fazer login
+                    </a>
+                </p>
             </form>
         </div>
     );

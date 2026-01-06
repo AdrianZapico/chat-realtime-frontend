@@ -76,6 +76,15 @@ const Login = () => {
                 >
                     {loading ? "Entrando..." : "Entrar"}
                 </button>
+                <p className="mt-4 text-center text-sm text-slate-400">
+                    Não tem conta?{" "}
+                    <a
+                        href="/register"
+                        className="text-emerald-400 hover:underline"
+                    >
+                        Criar conta
+                    </a>
+                </p>
             </form>
         </div>
     );
