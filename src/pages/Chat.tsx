@@ -3,6 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import { getSocket } from "../services/socket";
 import { useParams, Navigate } from "react-router-dom";
 import RoomsSidebar from "../components/Rooms/RoomsSidebar";
+
+
 import api from "../services/api";
 
 interface Message {
