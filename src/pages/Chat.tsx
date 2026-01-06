@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getSocket } from "../services/socket";
+import { useParams, Navigate } from "react-router-dom";
 import api from "../services/api";
 
 interface Message {
@@ -22,7 +23,11 @@ const Chat = () => {
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-    const roomId = "room1";
+    const { roomId } = useParams<{ roomId: string }>();
+
+    if (!roomId) {
+        return <Navigate to="/" />;
+    }
 
     // 🔹 Histórico
     useEffect(() => {
@@ -36,11 +41,11 @@ const Chat = () => {
         };
 
         loadHistory();
-    }, []);
+    }, [roomId]);
 
     // 🔹 Socket
     useEffect(() => {
-        if (!socket.current) return;
+        if (!socket.current || !roomId) return;
 
         socket.current.emit("joinRoom", roomId);
 
@@ -51,7 +56,11 @@ const Chat = () => {
         return () => {
             socket.current?.off("receiveMessage");
         };
-    }, []);
+    }, [roomId]);
+
+    useEffect(() => {
+        setMessages([]);
+    }, [roomId]);
 
     // 🔹 Scroll automático
     useEffect(() => {

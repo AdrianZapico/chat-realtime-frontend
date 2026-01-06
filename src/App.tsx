@@ -22,7 +22,7 @@ const App = () => {
         <Route path="/register" element={<Register />} />
 
         <Route
-          path="/chat"
+          path="/chat/:roomId"
           element={
             <PrivateRoute>
               <Chat />
