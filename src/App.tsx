@@ -2,10 +2,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Chat from "./pages/Chat";
-import Rooms from "./pages/Rooms";
+import Home from "./pages/Home";
 import PrivateRoute from "./routes/PrivateRoute";
 
-const App = () => {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
@@ -16,7 +16,7 @@ const App = () => {
           path="/"
           element={
             <PrivateRoute>
-              <Rooms />
+              <Home />
             </PrivateRoute>
           }
         />
@@ -32,6 +32,6 @@ const App = () => {
       </Routes>
     </BrowserRouter>
   );
-};
+}
 
 export default App;
