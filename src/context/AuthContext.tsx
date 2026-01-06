@@ -3,15 +3,17 @@ import api from "../services/api";
 import { connectSocket, disconnectSocket } from "../services/socket";
 
 interface User {
-    id: string;
+    _id: string;
     name: string;
     email: string;
 }
+
 
 interface AuthContextData {
     user: User | null;
     token: string | null;
     login: (email: string, password: string) => Promise<void>;
+    loading: boolean;
     register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => void;
 }
@@ -21,6 +23,8 @@ const AuthContext = createContext<AuthContextData | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         const storedToken = localStorage.getItem("token");
@@ -31,7 +35,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(JSON.parse(storedUser));
             connectSocket();
         }
+
+        setLoading(false);
     }, []);
+
 
     const login = async (email: string, password: string) => {
         const response = await api.post("/auth/login", {
@@ -41,14 +48,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const { token, user } = response.data;
 
+        // 🔥 NORMALIZAÇÃO DEFINITIVA
+        const normalizedUser = {
+            _id: user._id || user.id, // cobre os dois casos
+            name: user.name,
+            email: user.email,
+        };
+
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
 
         setToken(token);
-        setUser(user);
+        setUser(normalizedUser);
 
         connectSocket();
     };
+
 
     const register = async (name: string, email: string, password: string) => {
         await api.post("/auth/register", {
@@ -67,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );
