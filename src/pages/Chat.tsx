@@ -1,23 +1,44 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { connectSocket, disconnectSocket } from "../services/socket";
+import { getSocket } from "../services/socket";
+import api from "../services/api";
 
 interface Message {
-    id: string;
+    _id: string;
     content: string;
-    sender: string;
+    sender: {
+        _id: string;
+        name: string;
+    };
     createdAt: string;
 }
 
 const Chat = () => {
     const { user, logout } = useAuth();
-    const socket = useRef(connectSocket());
+    const socket = useRef(getSocket());
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [message, setMessage] = useState("");
 
-    const roomId = "room1"; // por enquanto fixo
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+    const roomId = "room1";
+
+    // 🔹 Histórico
+    useEffect(() => {
+        const loadHistory = async () => {
+            try {
+                const response = await api.get(`/chat/messages/${roomId}`);
+                setMessages(response.data);
+            } catch (error) {
+                console.error("Erro ao carregar histórico", error);
+            }
+        };
+
+        loadHistory();
+    }, []);
+
+    // 🔹 Socket
     useEffect(() => {
         if (!socket.current) return;
 
@@ -32,8 +53,13 @@ const Chat = () => {
         };
     }, []);
 
+    // 🔹 Scroll automático
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
     const handleSendMessage = () => {
-        if (!message.trim()) return;
+        if (!message.trim() || !socket.current) return;
 
         socket.current.emit("sendMessage", {
             roomId,
@@ -66,20 +92,27 @@ const Chat = () => {
                 {/* Messages */}
                 <main className="flex-1 overflow-y-auto p-6 space-y-4">
                     {messages.map((msg) => {
-                        const isMe = msg.sender === user?.id;
+                        const isMe = msg.sender._id === user?.id;
 
                         return (
                             <div
-                                key={msg.id}
+                                key={msg._id}
                                 className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                             >
                                 <div
                                     className={`max-w-xs px-4 py-2 rounded-lg ${isMe
-                                        ? "bg-emerald-600 text-white"
-                                        : "bg-slate-700 text-slate-100"
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-slate-700 text-slate-100"
                                         }`}
                                 >
+                                    {!isMe && (
+                                        <p className="text-xs text-slate-300 mb-1">
+                                            {msg.sender.name}
+                                        </p>
+                                    )}
+
                                     <p className="text-sm">{msg.content}</p>
+
                                     <span className="block mt-1 text-xs text-slate-300 text-right">
                                         {new Date(msg.createdAt).toLocaleTimeString()}
                                     </span>
@@ -87,6 +120,8 @@ const Chat = () => {
                             </div>
                         );
                     })}
+
+                    <div ref={messagesEndRef} />
                 </main>
 
                 {/* Input */}
