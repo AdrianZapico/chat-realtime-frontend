@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext";
-
 import RoomsSidebar from "../components/Rooms/RoomsSidebar";
 import ChatHeader from "../components/Chat/ChatHeader";
 import ChatMessages from "../components/Chat/ChatMessages";
 import ChatInput from "../components/Chat/ChatInput";
 import TypingIndicator from "../components/Chat/TypingIndicator";
-
 import { useChatMessages } from "../hooks/useChatMessages";
 import { useChatSocket } from "../hooks/useChatSocket";
 
