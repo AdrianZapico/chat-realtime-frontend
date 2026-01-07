@@ -9,6 +9,7 @@ import api from "../services/api";
 
 interface Message {
     _id: string;
+    roomId: string;
     content: string;
     sender: {
         _id: string;
@@ -50,20 +51,27 @@ const Chat = () => {
     useEffect(() => {
         if (!socket.current || !roomId) return;
 
+        // 🔹 entra na sala
         socket.current.emit("joinRoom", roomId);
 
-        socket.current.on("receiveMessage", (data: Message) => {
-            setMessages((prev) => [...prev, data]);
-        });
+        // 🔹 recebe mensagens SOMENTE da sala atual
+        const handleReceiveMessage = (data: Message) => {
+            if (data.roomId === roomId) {
+                setMessages((prev) => [...prev, data]);
+            }
+        };
+
+        socket.current.on("receiveMessage", handleReceiveMessage);
 
         return () => {
-            socket.current?.off("receiveMessage");
+            // 🔹 sai da sala antiga
+            socket.current?.emit("leaveRoom", roomId);
+
+            // 🔹 remove listener
+            socket.current?.off("receiveMessage", handleReceiveMessage);
         };
     }, [roomId]);
 
-    useEffect(() => {
-        setMessages([]);
-    }, [roomId]);
 
     // 🔹 Scroll automático
     useEffect(() => {
