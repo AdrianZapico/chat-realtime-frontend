@@ -1,94 +1,90 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
 import api from "../../services/api";
+import CreateRoomModal from "./CreateRoomModal";
 
 interface Room {
     _id: string;
     name: string;
 }
 
-const RoomsSidebar = () => {
+export default function RoomsSidebar() {
     const [rooms, setRooms] = useState<Room[]>([]);
-    const [newRoom, setNewRoom] = useState("");
-
+    const [openModal, setOpenModal] = useState(false);
     const navigate = useNavigate();
-    const { roomId } = useParams<{ roomId: string }>();
+    const { roomId } = useParams();
 
-    // 🔹 Carregar salas
-    const loadRooms = useCallback(async () => {
-        try {
-            const response = await api.get("/rooms");
-            setRooms(response.data);
-        } catch (error) {
-            console.error("Erro ao carregar salas", error);
-        }
-    }, []);
+    const loadRooms = async () => {
+        const res = await api.get("/rooms");
+        setRooms(res.data);
+    };
 
     useEffect(() => {
         loadRooms();
-    }, [loadRooms]);
+    }, []);
 
-    // 🔹 Criar sala
-    const handleCreateRoom = async () => {
-        if (!newRoom.trim()) return;
-
-        try {
-            const response = await api.post("/rooms", {
-                name: newRoom,
-            });
-
-            const createdRoom = response.data;
-
-            setNewRoom("");
-            setRooms((prev) => [...prev, createdRoom]);
-            navigate(`/chat/${createdRoom._id}`);
-        } catch (error) {
-            console.error("Erro ao criar sala", error);
-        }
+    const handleCreateRoom = async (name: string) => {
+        const res = await api.post("/rooms", { name });
+        setRooms((prev) => [res.data, ...prev]);
+        navigate(`/chat/${res.data._id}`);
     };
 
     return (
-        <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
-            {/* Criar sala */}
-            <div className="p-4 border-b border-slate-700">
-                <input
-                    value={newRoom}
-                    onChange={(e) => setNewRoom(e.target.value)}
-                    placeholder="Nova sala"
-                    className="w-full px-3 py-2 rounded bg-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+        <>
+            <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
+                {/* Header */}
+                <div className="p-4 border-b border-slate-700">
+                    <button
+                        onClick={() => setOpenModal(true)}
+                        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 py-2 rounded text-sm font-semibold"
+                    >
+                        <FiPlus />
+                        Criar sala
+                    </button>
+                </div>
 
-                <button
-                    onClick={handleCreateRoom}
-                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 py-2 rounded font-semibold"
-                >
-                    Criar sala
-                </button>
-            </div>
-
-            {/* Lista de salas */}
-            <nav className="flex-1 overflow-y-auto">
-                {rooms.map((room) => {
-                    const isActive = room._id === roomId;
-
-                    return (
-                        <button
+                {/* Rooms */}
+                <nav className="flex-1 overflow-y-auto">
+                    {rooms.map((room) => (
+                        <div
                             key={room._id}
-                            onClick={() => navigate(`/chat/${room._id}`)}
-                            className={`
-                                w-full text-left px-4 py-3 text-sm transition
-                                ${isActive
+                            className={`group flex items-center justify-between px-4 py-3 cursor-pointer text-sm
+                            ${room._id === roomId
                                     ? "bg-emerald-600 text-white"
-                                    : "text-slate-300 hover:bg-slate-700"}
-                            `}
+                                    : "text-slate-300 hover:bg-slate-700"
+                                }`}
                         >
-                            #{room.name}
-                        </button>
-                    );
-                })}
-            </nav>
-        </aside>
-    );
-};
+                            <span
+                                onClick={() =>
+                                    navigate(`/chat/${room._id}`)
+                                }
+                                className="flex-1 truncate"
+                            >
+                                #{room.name}
+                            </span>
 
-export default RoomsSidebar;
+                            {/* Icons */}
+                            <div className="hidden group-hover:flex gap-2 text-slate-200">
+                                <FiEdit2
+                                    className="hover:text-white"
+                                    size={14}
+                                />
+                                <FiTrash2
+                                    className="hover:text-red-400"
+                                    size={14}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </nav>
+            </aside>
+
+            <CreateRoomModal
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                onCreate={handleCreateRoom}
+            />
+        </>
+    );
+}
