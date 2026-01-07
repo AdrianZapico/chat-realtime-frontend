@@ -5,6 +5,7 @@ import api from "../../services/api";
 
 import CreateRoomModal from "./CreateRoomModal";
 import DeleteRoomModal from "./DeleteRoomModal";
+import EditRoomModal from "./EditRoomModal";
 
 interface Room {
     _id: string;
@@ -12,15 +13,19 @@ interface Room {
 }
 
 export default function RoomsSidebar() {
+    /* =========================
+       State
+    ========================== */
     const [rooms, setRooms] = useState<Room[]>([]);
     const [openCreateModal, setOpenCreateModal] = useState(false);
     const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+    const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
 
     const navigate = useNavigate();
     const { roomId } = useParams();
 
     /* =========================
-       Load rooms
+       Data
     ========================== */
     const loadRooms = useCallback(async () => {
         const res = await api.get("/rooms");
@@ -32,8 +37,13 @@ export default function RoomsSidebar() {
     }, [loadRooms]);
 
     /* =========================
-       Create room
+       Handlers — Rooms
     ========================== */
+    const handleOpenRoom = (id: string) => {
+        if (id === roomId) return;
+        navigate(`/chat/${id}`);
+    };
+
     const handleCreateRoom = async (name: string) => {
         const res = await api.post("/rooms", { name });
 
@@ -43,15 +53,20 @@ export default function RoomsSidebar() {
         navigate(`/chat/${res.data._id}`);
     };
 
-    /* =========================
-       Navigation
-    ========================== */
-    const handleOpenRoom = (id: string) => {
-        navigate(`/chat/${id}`);
+    const handleEditRoom = async (id: string, name: string) => {
+        const res = await api.put(`/rooms/${id}`, { name });
+
+        setRooms((prev) =>
+            prev.map((room) =>
+                room._id === id ? res.data : room
+            )
+        );
+
+        setRoomToEdit(null);
     };
 
     /* =========================
-       Delete room
+       Handlers — Delete
     ========================== */
     const handleDeleteClick = (
         room: Room,
@@ -88,15 +103,15 @@ export default function RoomsSidebar() {
                     <button
                         onClick={() => setOpenCreateModal(true)}
                         className="w-full flex items-center justify-center gap-2
-            bg-emerald-600 hover:bg-emerald-700 py-2 rounded
-            text-sm font-semibold"
+                        bg-emerald-600 hover:bg-emerald-700 py-2 rounded
+                        text-sm font-semibold"
                     >
                         <FiPlus />
                         Criar sala
                     </button>
                 </div>
 
-                {/* Rooms list */}
+                {/* Rooms */}
                 <nav className="flex-1 overflow-y-auto">
                     {rooms.map((room) => {
                         const isActive = room._id === roomId;
@@ -106,8 +121,8 @@ export default function RoomsSidebar() {
                                 key={room._id}
                                 onClick={() => handleOpenRoom(room._id)}
                                 className={`group flex items-center justify-between
-                px-4 py-3 cursor-pointer text-sm
-                ${isActive
+                                px-4 py-3 cursor-pointer text-sm
+                                ${isActive
                                         ? "bg-emerald-600 text-white"
                                         : "text-slate-300 hover:bg-slate-700"
                                     }`}
@@ -121,7 +136,10 @@ export default function RoomsSidebar() {
                                     <FiEdit2
                                         size={14}
                                         className="cursor-pointer hover:text-white"
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setRoomToEdit(room);
+                                        }}
                                     />
 
                                     <FiTrash2
@@ -138,14 +156,23 @@ export default function RoomsSidebar() {
                 </nav>
             </aside>
 
-            {/* Create room modal */}
+            {/* Create */}
             <CreateRoomModal
                 open={openCreateModal}
                 onClose={() => setOpenCreateModal(false)}
                 onCreate={handleCreateRoom}
             />
 
-            {/* Delete room modal */}
+            {/* Edit */}
+            {roomToEdit && (
+                <EditRoomModal
+                    room={roomToEdit}
+                    onClose={() => setRoomToEdit(null)}
+                    onSave={handleEditRoom}
+                />
+            )}
+
+            {/* Delete */}
             {roomToDelete && (
                 <DeleteRoomModal
                     room={roomToDelete}
