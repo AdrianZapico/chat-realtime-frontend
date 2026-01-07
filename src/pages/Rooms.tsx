@@ -1,49 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createRoom } from "../services/room";
+import api from "../services/api";
+
+interface Room {
+    _id: string;
+    name: string;
+}
 
 const Rooms = () => {
-    const [name, setName] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [rooms, setRooms] = useState<Room[]>([]);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const handleCreateRoom = async () => {
-        if (!name.trim()) return;
+    useEffect(() => {
+        const loadRooms = async () => {
+            try {
+                const response = await api.get("/rooms");
+                setRooms(response.data);
+            } catch (error) {
+                console.error("Erro ao carregar salas", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        try {
-            setLoading(true);
-            const room = await createRoom(name);
-            navigate(`/chat/${room._id}`);
-        } catch (error) {
-            console.error("Erro ao criar sala", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        loadRooms();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+                Carregando salas...
+            </div>
+        );
+    }
 
     return (
-        <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
-            <div className="bg-slate-800 p-6 rounded-lg w-full max-w-sm space-y-4">
-                <h1 className="text-xl font-semibold text-center">
-                    Criar nova sala
+        <div className="flex h-screen bg-slate-900 text-white">
+            {/* Sidebar já cuida da criação */}
+            {/* <RoomsSidebar /> se quiser usar aqui futuramente */}
+
+            <main className="flex-1 flex flex-col items-center justify-center gap-4">
+                <h1 className="text-2xl font-semibold mb-4">
+                    Salas disponíveis
                 </h1>
 
-                <input
-                    type="text"
-                    placeholder="Nome da sala"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-2 rounded bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-
-                <button
-                    onClick={handleCreateRoom}
-                    disabled={loading}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 py-2 rounded font-semibold disabled:opacity-50"
-                >
-                    {loading ? "Criando..." : "Criar sala"}
-                </button>
-            </div>
+                {rooms.length === 0 ? (
+                    <p className="text-slate-400">
+                        Nenhuma sala criada ainda.
+                        <br />
+                        Crie uma nova sala na sidebar.
+                    </p>
+                ) : (
+                    <div className="w-full max-w-sm space-y-2">
+                        {rooms.map((room) => (
+                            <button
+                                key={room._id}
+                                onClick={() => navigate(`/chat/${room._id}`)}
+                                className="w-full text-left px-4 py-3 rounded bg-slate-800 hover:bg-slate-700 transition"
+                            >
+                                #{room.name}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </main>
         </div>
     );
 };

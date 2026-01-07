@@ -19,7 +19,7 @@ const Login = () => {
 
         try {
             await login(email, password);
-            navigate("/"); // <-- CORRETO
+            navigate("/rooms"); // <-- CORRETO
         } catch (err) {
             setError("Credenciais inválidas");
         } finally {
