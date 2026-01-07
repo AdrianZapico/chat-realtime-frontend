@@ -10,3 +10,7 @@ export const createRoom = async (name: string): Promise<Room> => {
     const response = await api.post("/rooms", { name });
     return response.data;
 };
+
+export const deleteRoom = async (roomId: string) => {
+    await api.delete(`/rooms/${roomId}`);
+};

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
 import api from "../../services/api";
+
 import CreateRoomModal from "./CreateRoomModal";
+import DeleteRoomModal from "./DeleteRoomModal";
 
 interface Room {
     _id: string;
@@ -11,80 +13,146 @@ interface Room {
 
 export default function RoomsSidebar() {
     const [rooms, setRooms] = useState<Room[]>([]);
-    const [openModal, setOpenModal] = useState(false);
+    const [openCreateModal, setOpenCreateModal] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+
     const navigate = useNavigate();
     const { roomId } = useParams();
 
-    const loadRooms = async () => {
+    /* =========================
+       Load rooms
+    ========================== */
+    const loadRooms = useCallback(async () => {
         const res = await api.get("/rooms");
         setRooms(res.data);
-    };
+    }, []);
 
     useEffect(() => {
         loadRooms();
-    }, []);
+    }, [loadRooms]);
 
+    /* =========================
+       Create room
+    ========================== */
     const handleCreateRoom = async (name: string) => {
         const res = await api.post("/rooms", { name });
+
         setRooms((prev) => [res.data, ...prev]);
+        setOpenCreateModal(false);
+
         navigate(`/chat/${res.data._id}`);
     };
 
+    /* =========================
+       Navigation
+    ========================== */
+    const handleOpenRoom = (id: string) => {
+        navigate(`/chat/${id}`);
+    };
+
+    /* =========================
+       Delete room
+    ========================== */
+    const handleDeleteClick = (
+        room: Room,
+        e: React.MouseEvent
+    ) => {
+        e.stopPropagation();
+        setRoomToDelete(room);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!roomToDelete) return;
+
+        await api.delete(`/rooms/${roomToDelete._id}`);
+
+        setRooms((prev) =>
+            prev.filter((room) => room._id !== roomToDelete._id)
+        );
+
+        if (roomToDelete._id === roomId) {
+            navigate("/rooms");
+        }
+
+        setRoomToDelete(null);
+    };
+
+    /* =========================
+       Render
+    ========================== */
     return (
         <>
             <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-700">
                     <button
-                        onClick={() => setOpenModal(true)}
-                        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 py-2 rounded text-sm font-semibold"
+                        onClick={() => setOpenCreateModal(true)}
+                        className="w-full flex items-center justify-center gap-2
+            bg-emerald-600 hover:bg-emerald-700 py-2 rounded
+            text-sm font-semibold"
                     >
                         <FiPlus />
                         Criar sala
                     </button>
                 </div>
 
-                {/* Rooms */}
+                {/* Rooms list */}
                 <nav className="flex-1 overflow-y-auto">
-                    {rooms.map((room) => (
-                        <div
-                            key={room._id}
-                            className={`group flex items-center justify-between px-4 py-3 cursor-pointer text-sm
-                            ${room._id === roomId
-                                    ? "bg-emerald-600 text-white"
-                                    : "text-slate-300 hover:bg-slate-700"
-                                }`}
-                        >
-                            <span
-                                onClick={() =>
-                                    navigate(`/chat/${room._id}`)
-                                }
-                                className="flex-1 truncate"
-                            >
-                                #{room.name}
-                            </span>
+                    {rooms.map((room) => {
+                        const isActive = room._id === roomId;
 
-                            {/* Icons */}
-                            <div className="hidden group-hover:flex gap-2 text-slate-200">
-                                <FiEdit2
-                                    className="hover:text-white"
-                                    size={14}
-                                />
-                                <FiTrash2
-                                    className="hover:text-red-400"
-                                    size={14}
-                                />
+                        return (
+                            <div
+                                key={room._id}
+                                onClick={() => handleOpenRoom(room._id)}
+                                className={`group flex items-center justify-between
+                px-4 py-3 cursor-pointer text-sm
+                ${isActive
+                                        ? "bg-emerald-600 text-white"
+                                        : "text-slate-300 hover:bg-slate-700"
+                                    }`}
+                            >
+                                <span className="flex-1 truncate">
+                                    #{room.name}
+                                </span>
+
+                                {/* Actions */}
+                                <div className="hidden group-hover:flex gap-2">
+                                    <FiEdit2
+                                        size={14}
+                                        className="cursor-pointer hover:text-white"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+
+                                    <FiTrash2
+                                        size={14}
+                                        className="cursor-pointer hover:text-red-400"
+                                        onClick={(e) =>
+                                            handleDeleteClick(room, e)
+                                        }
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </nav>
             </aside>
 
+            {/* Create room modal */}
             <CreateRoomModal
-                open={openModal}
-                onClose={() => setOpenModal(false)}
+                open={openCreateModal}
+                onClose={() => setOpenCreateModal(false)}
                 onCreate={handleCreateRoom}
             />
+
+            {/* Delete room modal */}
+            {roomToDelete && (
+                <DeleteRoomModal
+                    room={roomToDelete}
+                    onClose={() => setRoomToDelete(null)}
+                    onConfirm={handleConfirmDelete}
+                />
+            )}
         </>
     );
 }
