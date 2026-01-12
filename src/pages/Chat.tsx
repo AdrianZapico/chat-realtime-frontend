@@ -36,7 +36,7 @@ const Chat = () => {
     const [message, setMessage] = useState("");
 
     const handleSendMessage = () => {
-        console.log("ENVIANDO:", { roomId, message });
+        // console.log("ENVIANDO:", { roomId, message });
         if (!message.trim() || !socket.current) return;
 
         socket.current.emit("sendMessage", {
